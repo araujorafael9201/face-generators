@@ -12,16 +12,18 @@ print(f"using device {device}")
 
 data_directory="data"
 dataset = ImageFolder(data_directory, transform=Compose([Resize((128,128)), ToTensor()]))
-dataloader = DataLoader(dataset, batch_size=512, shuffle=True, num_workers=4)
+dataloader = DataLoader(dataset, batch_size=1024, shuffle=True, num_workers=4)
 
-model = VAE(input_dim=3*128*128, hidden_dim=1024, latent_dim=512).to(device)
-if os.path.exists("vae.pth"):
+model = VAE(input_dim=3*128*128, hidden_dim=256, latent_dim=128).to(device)
+if os.path.exists("vae/models/vae.pth"):
     print("starting from checkpoint")
-    model.load_state_dict(torch.load("vae.pth", weights_only=True))
+    model.load_state_dict(torch.load("vae/models/vae.pth", weights_only=True))
 epochs = 50
-optim = torch.optim.AdamW(model.parameters(), lr=1e-3)
+lr = 1e-3
+optim = torch.optim.AdamW(model.parameters(), lr=lr)
 criterion = torch.nn.BCELoss(reduction="sum")
 checkpoint_steps = 5
+lr_factor = 0.1
 
 for e in tqdm.tqdm(range(epochs), desc="Epochs"):
     losses = []
@@ -36,9 +38,11 @@ for e in tqdm.tqdm(range(epochs), desc="Epochs"):
 
         optim.step()
 
-    if e % checkpoint_steps == 0:
-        torch.save(model.state_dict(), "vae.pth")
+    if (e + 1) % checkpoint_steps == 0 or (e + 1) == epochs:
+        torch.save(model.state_dict(), f"vae/models/vae.pth")
+
+    if (e + 1) % 20 == 0:
+        lr *= lr_factor
+        optim = torch.optim.AdamW(model.parameters(), lr=lr)
 
     print(f"epoch {e}, loss: {sum(losses) / len(losses)}")
-
-torch.save(model.state_dict(), "vae.pth")
