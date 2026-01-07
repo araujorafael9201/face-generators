@@ -1,3 +1,4 @@
+import os
 import tqdm
 import torch
 from torch.utils.data import DataLoader
@@ -14,13 +15,17 @@ dataset = ImageFolder(data_directory, transform=Compose([Resize((128,128)), ToTe
 dataloader = DataLoader(dataset, batch_size=512, shuffle=True, num_workers=4)
 
 model = VAE(input_dim=3*128*128, hidden_dim=1024, latent_dim=512).to(device)
+if os.path.exists("vae.pth"):
+    print("starting from checkpoint")
+    model.load_state_dict(torch.load("vae.pth", weights_only=True))
 epochs = 50
 optim = torch.optim.AdamW(model.parameters(), lr=1e-3)
 criterion = torch.nn.BCELoss(reduction="sum")
+checkpoint_steps = 5
 
-for e in tqdm.tqdm(range(epochs)):
+for e in tqdm.tqdm(range(epochs), desc="Epochs"):
     losses = []
-    for X, _ in dataloader:
+    for X, _ in tqdm.tqdm(dataloader, leave=False, desc=f"Epoch {e} progress"):
         optim.zero_grad()
         X = X.to(device)
 
@@ -30,6 +35,9 @@ for e in tqdm.tqdm(range(epochs)):
         loss.backward()
 
         optim.step()
+
+    if e % checkpoint_steps == 0:
+        torch.save(model.state_dict(), "vae.pth")
 
     print(f"epoch {e}, loss: {sum(losses) / len(losses)}")
 
