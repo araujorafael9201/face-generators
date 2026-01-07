@@ -14,6 +14,28 @@ To run the code in this project, you need to have Python and PyTorch installed. 
 pip install torch torchvision matplotlib tqdm
 ```
 
+## Gradio Frontend
+
+An interactive Gradio interface is provided in `web.py` so you can easily test and create your own samples
+
+### Dependencies
+
+Install the UI dependencies:
+
+```bash
+pip install gradio
+```
+
+### Run Locally
+
+Start the frontend from the project root:
+
+```bash
+python web.py
+```
+
+Gradio will launch a local server and display a link in the terminal. Open the provided URL in your browser, pick either the VAE or GAN option, and click Generate to create a face sample.
+
 ## Generative Adversarial Network (GAN)
 
 ### Architecture
